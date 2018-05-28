@@ -12,7 +12,7 @@ gratuitamente [aqui](http://courses.missouristate.edu/KenVollmar/mars/).
 
 ## TODO list
 
-- [ ] Simular uma estrutura de fila (FIFO) para armazenar as posições dos
-pixels da cobra.
-- [ ] Gerar a "maçã" aleatoriamente usando syscall e verificar se o ponto
-gerado coincide com algum ponto da cobra.
+- [x] Simular uma estrutura de fila (FIFO)
+- [ ] armazenar as posições dos pixels da cobra.
+- [x] Gerar a "maçã" aleatoriamente usando syscall 
+- [ ] Verificar se o ponto gerado coincide com algum ponto da cobra.
