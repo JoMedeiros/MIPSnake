@@ -8,7 +8,7 @@ blue:	0x00000001
 	.globl main
 
 main:
-	li $t0, 0
+	li $t0, 0	# Cor que vai ser pintada na tela
 	li $s1, 0
 	li $t1, 0
 	li $t2, 0x800
