@@ -1,0 +1,8 @@
+Teste1:
+moves: 1 down
+Foi até o limite direito e desceu até a penúltima linha antes de travar com move left
+
+Teste2:
+moves: 1 down 1 left 1 up
+Foi até o meio da tela, desce até a última linha, segue a direita até a última coluna, sobe e trava ao ir para a esquerda
+

@@ -1,6 +1,6 @@
 	.data
 queueBegin:	.word	0x10011000
-queueEnd:	.word	0x10012000
+queueEnd:	.word	0x10011050
 screen:		.word 	0x10010000
 green:		.word	0x0000FF00
 
@@ -10,8 +10,6 @@ green:		.word	0x0000FF00
 main:
 
 	lw $t0, green
-#	sw $t0, 0x10010084
-#	sw $t0, 0x10010088
 
 	lw $s0, queueBegin
 	lw $s1, queueEnd
@@ -50,10 +48,10 @@ eraseTail:
 	j wait
 eraseTail_if:
 	addi $s2, $s2, 4	# Pointer arithmetic
-			
+	
 wait:
-	li $a0, 500		#
-	li $v0, 32		# Pause for 500 milisec
+	li $a0, 100		#
+	li $v0, 32		# Pause for 100 milisec
 	syscall			#
 	
 	lw $s1, 0xFFFF0004		# Verifying which key is pressed
