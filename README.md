@@ -9,6 +9,7 @@ This is a version of classic snake game for MIPS processor written in Assembly.
 To run the `.asm` file you can download a MIPS emulator. The MIPS Mars is
 a free emulator made in java that you can download [here](http://courses.missouristate.edu/KenVollmar/mars/).
 
+:exclamation: 
 ### MARS's bugs :bug:
 
 There's a bug in the Mars MIPS emulator. You may fix it following the instructions in this [link](https://dtconfect.wordpress.com/2013/02/09/mars-mips-simulator-lockup-hackfix/).
@@ -19,14 +20,15 @@ Currently the snake is moving, the program stops when it collides with the wall 
 
 ## TODO list
 
-- [x] Simulate a queue structure (FIFO).
-- [ ] Store the snake pixels positions int the queue.
+- [x] ~~Simulate a queue structure (FIFO).~~
+- [ ] ~~Store the snake pixels positions int the queue.~~
 - [x] Generate random "apple" using syscall.
-- [x] Walls collision.
+- [ ] Walls collision.
 - [ ] Verify if the "apple" collides with the snake.
+- [ ] *(optional) Display score* 
 
-## Authors
+## Authors :octocat:
 
 - [Josivan](https://www.github.com/JoMedeiros)
-- [Natalia ](https://github.com/bnatalha)
+- [Natalia](https://github.com/bnatalha)
 
