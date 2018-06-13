@@ -37,9 +37,9 @@ screen:		0x10010000	# Start address of the screen
 	lw $t3, screen
 	li $t4, 0xFFFF0000	# Apple color
 init:
-	sw $s0, ($t0)
-	addi $t0, $t0, 4
-	blt $t0, $t1, init
+	sw $s0, ($t0) 		# 
+	addi $t0, $t0, 4 	# while SB < SE, fill the display with the snake body (size: 6/4??)
+	blt $t0, $t1, init 	# initial size will be 2.
 
 	jal generateApple
 	addi $ra, $ra, 16	# jumps to the line after addi to avoid verification 
@@ -107,7 +107,7 @@ moveUp:
 	j moveUp
 drawHead:
 	# Computing Address of (x, y) on the screen
-	sll $t1, $s5, 5
+	sll $t1, $s5, 5 	
 	add $t1, $t1, $s4
 	sll $t1, $t1, 2
 	li $t2, 0x10010000	# Start address on the screen
@@ -152,14 +152,17 @@ generateApple:
 # Painting apple pixel
 	move $t0, $a0
 	sll $t0, $t0, 2
-	add $t3, $t3, $t0
-	sw $t4, ($t3)
+	add $t3, $t3, $t0 #!
+	sw $t4, ($t3) #! t3 = screen. comparation with t3 to branch to erase tail
 #---------------------------------------------------------
 	jr $ra
 	
 quit:
+	li $v0, 10
+	syscall
+	
 # TODO Here may come the score or clear the screen...
-
+	
 
 
 

@@ -1,50 +1,46 @@
-    .macro Terminate
-        li $v0, 10
-        syscall
-    .end_macro
+# -------------------------------
+# yellow blinking display
+# -------------------------------
+	.macro Terminate
+		li $v0, 10
+		syscall
+	.end_macro
 
-    .data
-what0: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what1: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what2: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what3: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what4: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what5: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what6: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what7: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
+	.data
+addres:	.word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
+yellowline:	.word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
+redline:	.word 0xFFFF0000, 0xFFFF0000, 0xFFFF0000, 0xFFFF0000
 
-what8: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what9: .word 0x00FF0000, 0x00FF0000, 0x00FFFF00, 0x00FFFF00
-what10: .word 0x00FFFF00, 0x00FF0000, 0x00FFFF00, 0x00FFFF00
-what11: .word 0x00FF0000, 0x00FFFF00, 0x00FFFF00, 0x00FF0000
-what12: .word 0x00FFFF00, 0x00FF0000, 0x00FF0000, 0x00FF0000
-what13: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what14: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-
-what15: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what16: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FF0000
-what17: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what18: .word 0x00FF0000, 0x00FFFF00, 0x00FF0000, 0x00FFFF00
-what19: .word 0x00FF0000, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what20: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what21: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-
-what22: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what23: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-what24: .word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FF0000
-what25: .word 0x00FFFF00, 0x00FF0000, 0x00FF0000, 0x00FFFF00
-what26: .word 0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FFFF00
-what27: .word 0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FFFF00
-what28: .word 0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FFFF00
-
-    .text   
+	.text   
 main:
+	li $t0, 0 #blinking times
+	li $t7, 5 #max blinking times
 	li $t1, 0
 	li $t2, 4
-	li $t3, 0x240
-loop:
-    lw $t4, what0($t1)
-    sw $t4, what0($t1)
-    addu $t1, $t1, $t2
-    blt $t1, $t3, loop
+	li $t3, 0x1000 #size of the display
+#	li $t3, 0x8 #4 pixels
+	
+	lw $t4, yellowline($t1) 
+	
+yellow:
+	sw $t4, addres($t1)
+	addu $t1, $t1, $t2
+	blt $t1, $t3, yellow
+pause:
+	li $t1, 0	#reset pixel counter
+
+	li $a0, 500	#
+	li $v0, 32	# Pause for 100 milisec
+	syscall		#
+	
+	beq $t0, $t7, quit
+	lw $t4, redline($t1) 
+red:
+	sw $t4, addres($t1)
+	addu $t1, $t1, $t2
+	blt $t1, $t3, red
+	
+	addi $t0, $t0, 1
+	j pause
+quit:
 	Terminate
