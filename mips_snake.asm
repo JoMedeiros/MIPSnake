@@ -8,22 +8,38 @@
 #---------------------------------------------------------------#
 # Total units: (256/8) * (256/8) = 32 x 32 = 1024 pixels	#
 #################################################################
-	.data
-# colors/ indicators
-apple:		0xFFFF0000
-snakeRight:	0x0000FFFF
-snakeDown:	0x0100FF66
-snakeLeft:	0x0200FF00
-snakeUp:	0x03FFFF00
-bg:		0x00005500
 
-screen:		0x10010000	# Start address of the screen
+#-------------------------------------------------------#
+#	Macros:						#
+	.macro Pause
+		li $a0, 100	#
+		li $v0, 32	# Pause for 100 milisec
+		syscall		#
+	.end_macro
+#-------------------------------------------------------#
 
-	.text
-############################################################################
+#--------------------------------------------------------------------------#
 # Here we use the first byte of the color word to store other informations
 # 00 - moving Right | 01 - moving Down | 02 - moving Left | 03 moving Up
 # these flags are useful to erase the tail
+	.data			#-----------------------------------
+			       	# MOVEMENT | DM | COLOR            |
+apple:		0xFFFF0000 	# FF (DM)  | FF | 0000 - Red       |
+snakeRight:	0x0000FFFF 	# FF       | FF | FFFF - BlueGreen |
+snakeDown:	0x0100FF66	# FF       | FF | 0000 - 
+snakeLeft:	0x0200FF00	# FF       | FF | 0000
+snakeUp:	0x03FFFF00	# FF       | FF | 0000
+bg:		0x00005500	# FF       | FF | 0000
+				#-----------------------------------
+screen:		0x10010000	# Start address of the screen
+
+#* DM = Dont matter
+#--------------------------------------------------------------------------#
+
+
+#--------------------------------------------------------------------------#
+	.text
+
 	lw $s0, snakeRight
 	lw $s1, snakeDown
 	lw $s2, snakeLeft
@@ -50,9 +66,7 @@ moveRight:
 	jal drawHead
 	addi $s4, $s4, 1
 	
-	li $a0, 100		#
-	li $v0, 32		# Pause for 100 milisec
-	syscall			#
+	Pause
 	
 	lw $t7, 0xFFFF0004		# Verifying which key is pressed
 					# OBS: This value stays on the register until another key is pressed
@@ -65,9 +79,7 @@ moveDown:
 	jal drawHead
 	addi $s5, $s5, 1
 	
-	li $a0, 100		#
-	li $v0, 32		# Pause for 100 milisec
-	syscall			#
+	Pause
 	
 	lw $t7, 0xFFFF0004		# Verifying which key is pressed
 					# OBS: This value stays on the register until another key is pressed
@@ -80,9 +92,7 @@ moveLeft:
 	jal drawHead
 	subi $s4, $s4, 1
 	
-	li $a0, 100		#
-	li $v0, 32		# Pause for 100 milisec
-	syscall			#
+	Pause
 	
 	lw $t7, 0xFFFF0004		# Verifying which key is pressed
 					# OBS: This value stays on the register until another key is pressed
@@ -95,9 +105,7 @@ moveUp:
 	jal drawHead
 	subi $s5, $s5, 1
 	
-	li $a0, 100		#
-	li $v0, 32		# Pause for 100 milisec
-	syscall			#
+	Pause
 	
 	lw $t7, 0xFFFF0004		# Verifying which key is pressed
 					# OBS: This value stays on the register until another key is pressed
