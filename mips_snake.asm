@@ -11,46 +11,71 @@
 # Total units: (512/8) * (256/8) = 64 x 32 = 2048 pixels	#
 #################################################################
 
-#-------------------------------------------------------#
-#	Macros:						#
-	.macro Pause
-		li $a0, 100	#
-		li $v0, 32	# Pause for 100 milisec
-		syscall		#
+#########################################################################################
+# Here we use the first byte of the color word to store other informations		#
+# 00 - moving Right | 01 - moving Down | 02 - moving Left | 03 moving Up		#
+# these flags are useful to erase the tail						#
+	.data				#------------------------			#
+				       	# FLAG    | R  | G  | B   			#
+screenStart:	.word 0x10010200	#			#
+apple:		.word 0xFFFF0000 	# FF (DM) | 00 | FF | 00  ----APPLE		#
+snakeRight:	.word 0x0000FF00 	# 00      | 00 | FF | 00  --|			#
+snakeDown:	.word 0x0100FF00	# 01      | 00 | FF | 00    |-MOVEMENT		#
+snakeLeft:	.word 0x0200FF00	# 02      | 00 | FF | 00    |			#
+snakeUp:	.word 0x0300FF00	# 03      | 00 | FF | 00  --|			#
+arenaBG:	.word 0xBBBBFFFF	# BB      | B2 | 22 | 22  ----BACKGROUND COLOR	#
+					#------------------------			#									#
+#* DM = Dont matter									#
+#########################################################################################
+
+#################################################################################################
+#	Macros:											#
+#	       _____										#
+	.macro Pause										#
+		li $a0, 200	#								#
+		li $v0, 32	# Pause for 100 milisec						#
+		syscall		#								#
+	.end_macro										#
+												#	
+#-----------------------------------------------------------------------------------------------#
+#	       __________
+	.macro PaintArena 
+		li $t0, 128 #starting line index [halved line size]
+		li $t1, 0 #starting pixel index
+		lw $t3, screenStart # load starting address on s3		
+		lw $t2, arenaBG #load bg color on s2	
+	drawline:
+		sw $t2, ($t3)		# paint pixel_address
+		addi $t3, $t3, 4	# pixel_adress++
+		addi $t1, $t1, 4	# pixel_i++
+		blt $t1, $t0, drawline	# if pixel_index < (line_size/2), keep painting line
+		addi $t3, $t3, 128	# 	else, jump pixel_adress to next beginning line.
+		addi $t1, $t1, 128	# 	jump pixel_i to next beginning line.
+		addi $t0, $t0, 256	# 	line_i++.
+		ble  $t0, 7552, drawline# if not finished painting line, do it again
+					# (29*line_size)+(line_size/2)=7552
 	.end_macro
 
-#	.macro PaintArena
-#
-#	.end_macro
+#---------------------------------------------------------------------------------------------#
 	
 #	.macro ChkIfInsideArena
 #		li $a0, 100	#
 #		li $v0, 32	# Pause for 100 milisec
 #		syscall		#
 #	.end_macro
-#-------------------------------------------------------#
-
-#--------------------------------------------------------------------------#
-# Here we use the first byte of the color word to store other informations
-# 00 - moving Right | 01 - moving Down | 02 - moving Left | 03 moving Up
-# these flags are useful to erase the tail
-	.data			#------------------------
-			       	# FLAG    | R  | G  | B   
-apple:		0xFFFF0000 	# FF (DM) | 00 | FF | 00  ----APPLE
-snakeRight:	0x0000FF00 	# 00      | 00 | FF | 00  --|
-snakeDown:	0x0100FF00	# 01      | 00 | FF | 00    |-MOVEMENT
-snakeLeft:	0x0200FF00	# 02      | 00 | FF | 00    |
-snakeUp:	0x0300FF00	# 03      | 00 | FF | 00  --|
-arenaBG:	0xBBB22222	# BB      | B2 | 22 | 22  ----BACKGROUND COLOR
-				#------------------------
-screen:		0x10010000	# Start address of the screen
-
-#* DM = Dont matter
-#--------------------------------------------------------------------------#
+#########################################################
 
 
-#--------------------------------------------------------------------------#
+######################################################################
 	.text
+	
+	PaintArena		#Paint the arena
+	
+	Pause
+	Pause
+	Pause
+	Pause
+	Pause
 
 	lw $s0, snakeRight
 	lw $s1, snakeDown
@@ -58,11 +83,11 @@ screen:		0x10010000	# Start address of the screen
 	lw $s3, snakeUp
 	li $s4, 3		# Head x_pos
 	li $s5, 1		# Head y_pos
-	li $s6, 0x10010084	# Tracking the tail to erase
+	li $s6, 0x10010404	# Tracking the tail to erase
 	lw $s7, snakeRight	# Current movement
-	li $t0, 0x10010084	# Snake begin
-	li $t1, 0x10010090	# Snake end --- total size: (end - begin)/4 
-	lw $t3, screen
+	li $t0, 0x10010404	# Snake begin
+	li $t1, 0x10010410	# Snake end --- total size: (end - begin)/4 
+	lw $t3, screenStart
 	li $t4, 0xFFFF0000	# Apple color
 init:
 	sw $s0, ($t0) 		# 
@@ -125,34 +150,32 @@ moveUp:
 	beq $t7, 0x00000064, moveRight	# d key is pressed
 	beq $t7, 0x00000071, quit	# q key is pressed
 	j moveUp
-drawHead:
-#--------------------------------------------------------------------------------------------------------------#
+
+#-------------------------------------------------------------------------------------------------------------#
+drawHead:	#local reg: $t7, $t0
+
 # Computing Address of (x, y) on the screen
 
 	sll $t1, $s5, 6 	# t1 = s5 * (2^6) = s5 * 64		(computing y)
 	add $t1, $t1, $s4	# t1 += s4				(computing x) 
 	sll $t1, $t1, 2		# 					(coordenate -> address)
-	li $t2, 0x10010000	# Start address on the screen
+	lw $t2, screenStart	# Start address on the screen
 	add $t1, $t1, $t2	# Terminate couting address of new head
-	# free register: t0
 	lw $t0, ($t1)		# Takes data stored at new head for comparation
-	and $t0, $t0, 0x0000FF00 # cleans value for comparation (only LSB 3-4 matter)*
-	beq $t0, 0x0000FF00, quit # if new head address is already colored (and is not apple's red color), quit
-	
-	#verify if its apple
-	#if it is, do not erase tail AND generate apple
-	#	else, erase tail 
-	
+
+	# switch
+	beq $t0, 0xFFFF0000, okayHead	# if is new head is apple, jump bg verification; else
+	bne $t0, 0xBBBBFFFF, quit	# if new head address is NOT on the arena, quit
+okayHead: 
 	sw $s7, ($t1)		# else, store it at $CurrentMovement register
 	bne $t3, $s6, eraseTail #???????????????????
 	j generateApple
 	
-#* REG: MOVEMENT |COLOR            |
-#       xx       |xxFFxx
 #--------------------------------------------------------------------------------------------------------------#
-eraseTail:
-	lw $t6, ($s6)
-	sw $zero, ($s6)		# Clear the tail on the screen
+eraseTail:	#local reg: $t7, $t6
+	lw $t6, ($s6)		# save previous value of tail
+	lw $t7, arenaBG		# load arenaBG color
+	sw $t7, ($s6)		# Clear the tail on the screen (replace with arena color)
 	beq $t6, $s0, eraseRight
 	beq $t6, $s1, eraseDown
 	beq $t6, $s2, eraseLeft
@@ -188,14 +211,10 @@ generateApple:
 	sw $t4, ($t3)
 #---------------------------------------------------------
 	jr $ra
-	
+
 quit:
 	li $v0, 10
 	syscall
 	
 # TODO Here may come the score or clear the screen...
 	
-
-
-
-
