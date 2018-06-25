@@ -7,40 +7,22 @@
 	.end_macro
 
 	.data
-addres:	.word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-yellowline:	.word 0x00FFFF00, 0x00FFFF00, 0x00FFFF00, 0x00FFFF00
-redline:	.word 0xFFFF0000, 0xFFFF0000, 0xFFFF0000, 0xFFFF0000
+	addres:	.word 0x00FFFF00
+	yellow:	.word 0x00FFFF00
 
 	.text   
 main:
-	li $t0, 0 #blinking times
-	li $t7, 5 #max blinking times
-	li $t1, 0
-	li $t2, 4
-	li $t3, 0x1000 #size of the display
-#	li $t3, 0x8 #4 pixels
+	li $s0, 128 #line index
+	li $s1, 0 #pixel index
+		
+	lw $s2, yellow #carrega a cor amarela em t4
 	
-	lw $t4, yellowline($t1) 
-	
-yellow:
-	sw $t4, addres($t1)
-	addu $t1, $t1, $t2
-	blt $t1, $t3, yellow
-pause:
-	li $t1, 0	#reset pixel counter
-
-	li $a0, 500	#
-	li $v0, 32	# Pause for 100 milisec
-	syscall		#
-	
-	beq $t0, $t7, quit
-	lw $t4, redline($t1) 
-red:
-	sw $t4, addres($t1)
-	addu $t1, $t1, $t2
-	blt $t1, $t3, red
-	
-	addi $t0, $t0, 1
-	j pause
+paintline:
+	sw $s2, addres($s1)		# paint pixel(address+t1)
+	addi $s1, $s1, 4		# t1++ [pixel++]
+	blt $s1, $s0, paintline		# if t1 < linesize, keep painting line
+	addi $s1, $s1, 128		# 	else, jump t1 to next line.
+	addi $s0, $s0, 256		# 	line++.
+	ble  $s0, 8064, paintline	# if not finished painting line, do it again
 quit:
 	Terminate

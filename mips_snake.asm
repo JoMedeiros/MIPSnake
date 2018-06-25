@@ -3,10 +3,12 @@
 #---------------------------------------------------------------#
 #	Unit Width in pixels: 8					#
 #	Unit Height in Pixels: 8				#
-#	Display Width in Pixels: 256				#
+#	Display Width in Pixels: 256 - PREVIOUS			#
+#	Display Width in Pixels: 512				#
 #	Display Height in Piexels: 256				#
 #---------------------------------------------------------------#
-# Total units: (256/8) * (256/8) = 32 x 32 = 1024 pixels	#
+# Total units: (256/8) * (256/8) = 32 x 32 = 1024 pixels - PRV	#
+# Total units: (512/8) * (256/8) = 64 x 32 = 2048 pixels	#
 #################################################################
 
 #-------------------------------------------------------#
@@ -16,21 +18,31 @@
 		li $v0, 32	# Pause for 100 milisec
 		syscall		#
 	.end_macro
+
+#	.macro PaintArena
+#
+#	.end_macro
+	
+#	.macro ChkIfInsideArena
+#		li $a0, 100	#
+#		li $v0, 32	# Pause for 100 milisec
+#		syscall		#
+#	.end_macro
 #-------------------------------------------------------#
 
 #--------------------------------------------------------------------------#
 # Here we use the first byte of the color word to store other informations
 # 00 - moving Right | 01 - moving Down | 02 - moving Left | 03 moving Up
 # these flags are useful to erase the tail
-	.data			#-----------------------------------
-			       	# MOVEMENT | DM | COLOR            |
-apple:		0xFFFF0000 	# FF (DM)  | FF | 0000 - Red       |
-snakeRight:	0x0000FFFF 	# FF       | FF | FFFF - BlueGreen |
-snakeDown:	0x0100FF66	# FF       | FF | 0000 - 
-snakeLeft:	0x0200FF00	# FF       | FF | 0000
-snakeUp:	0x03FFFF00	# FF       | FF | 0000
-bg:		0x00005500	# FF       | FF | 0000
-				#-----------------------------------
+	.data			#------------------------
+			       	# FLAG    | R  | G  | B   
+apple:		0xFFFF0000 	# FF (DM) | 00 | FF | 00  ----APPLE
+snakeRight:	0x0000FF00 	# 00      | 00 | FF | 00  --|
+snakeDown:	0x0100FF00	# 01      | 00 | FF | 00    |-MOVEMENT
+snakeLeft:	0x0200FF00	# 02      | 00 | FF | 00    |
+snakeUp:	0x0300FF00	# 03      | 00 | FF | 00  --|
+arenaBG:	0xBBB22222	# BB      | B2 | 22 | 22  ----BACKGROUND COLOR
+				#------------------------
 screen:		0x10010000	# Start address of the screen
 
 #* DM = Dont matter
@@ -114,19 +126,30 @@ moveUp:
 	beq $t7, 0x00000071, quit	# q key is pressed
 	j moveUp
 drawHead:
-	# Computing Address of (x, y) on the screen
-	sll $t1, $s5, 5 	
-	add $t1, $t1, $s4
-	sll $t1, $t1, 2
-	li $t2, 0x10010000	# Start address on the screen
-	add $t1, $t1, $t2	# Terminate couting address
-	lw $t0, ($t1)
-	and $t0, $t0, 0x0000FF00
-	beq $t0, 0x0000FF00, quit
-	sw $s7, ($t1)
-	bne $t3, $s6, eraseTail
-	j generateApple
+#--------------------------------------------------------------------------------------------------------------#
+# Computing Address of (x, y) on the screen
 
+	sll $t1, $s5, 6 	# t1 = s5 * (2^6) = s5 * 64		(computing y)
+	add $t1, $t1, $s4	# t1 += s4				(computing x) 
+	sll $t1, $t1, 2		# 					(coordenate -> address)
+	li $t2, 0x10010000	# Start address on the screen
+	add $t1, $t1, $t2	# Terminate couting address of new head
+	# free register: t0
+	lw $t0, ($t1)		# Takes data stored at new head for comparation
+	and $t0, $t0, 0x0000FF00 # cleans value for comparation (only LSB 3-4 matter)*
+	beq $t0, 0x0000FF00, quit # if new head address is already colored (and is not apple's red color), quit
+	
+	#verify if its apple
+	#if it is, do not erase tail AND generate apple
+	#	else, erase tail 
+	
+	sw $s7, ($t1)		# else, store it at $CurrentMovement register
+	bne $t3, $s6, eraseTail #???????????????????
+	j generateApple
+	
+#* REG: MOVEMENT |COLOR            |
+#       xx       |xxFFxx
+#--------------------------------------------------------------------------------------------------------------#
 eraseTail:
 	lw $t6, ($s6)
 	sw $zero, ($s6)		# Clear the tail on the screen
@@ -139,13 +162,13 @@ eraseRight:
 	addi $s6, $s6, 4	# next pixel to erase
 	jr $ra
 eraseDown:
-	addi $s6, $s6, 128
+	addi $s6, $s6, 256
 	jr $ra
 eraseLeft:
 	subi $s6, $s6, 4
 	jr $ra
 eraseUp:
-	subi $s6, $s6, 128
+	subi $s6, $s6, 256
 	jr $ra
 	
 generateApple:
@@ -156,12 +179,13 @@ generateApple:
     	
     	li $v0, 1   #1 print integer
     	syscall
-#---------------------------------------------------------    	
-# Painting apple pixel
+# Verify if it's inside the playabe area -----------------
+
+# Painting apple pixel -----------------------------------
 	move $t0, $a0
 	sll $t0, $t0, 2
-	add $t3, $t3, $t0 #!
-	sw $t4, ($t3) #! t3 = screen. comparation with t3 to branch to erase tail
+	add $t3, $t3, $t0
+	sw $t4, ($t3)
 #---------------------------------------------------------
 	jr $ra
 	
