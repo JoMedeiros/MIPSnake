@@ -3,12 +3,11 @@
 #---------------------------------------------------------------#
 #	Unit Width in pixels: 8					#
 #	Unit Height in Pixels: 8				#
-#	Display Width in Pixels: 256 - PREVIOUS			#
 #	Display Width in Pixels: 512				#
 #	Display Height in Piexels: 256				#
 #---------------------------------------------------------------#
-# Total units: (256/8) * (256/8) = 32 x 32 = 1024 pixels - PRV	#
 # Total units: (512/8) * (256/8) = 64 x 32 = 2048 pixels	#
+# Arena units: (240/8) * (256/8) = 30 x 32 = 960 pixels		#
 #################################################################
 
 #########################################################################################
@@ -29,14 +28,14 @@ arenaBG:	.word 0xBBBBFFFF	# BB      | B2 | 22 | 22  ----BACKGROUND COLOR	#
 #########################################################################################
 
 #################################################################################################
-#	Macros:											#
-#	       _____										#
-	.macro Pause										#
-		li $a0, 200	#								#
-		li $v0, 32	# Pause for 100 milisec						#
-		syscall		#								#
-	.end_macro										#
-												#	
+#	Macros:											
+#	       _____										
+	.macro Pause										
+		li $a0, 100	#								
+		li $v0, 32	# Pause for 100 milisec						
+		syscall		#								
+	.end_macro										
+													
 #-----------------------------------------------------------------------------------------------#
 #	       __________
 	.macro PaintArena 
@@ -56,25 +55,14 @@ arenaBG:	.word 0xBBBBFFFF	# BB      | B2 | 22 | 22  ----BACKGROUND COLOR	#
 					# (29*line_size)+(line_size/2)=7552
 	.end_macro
 
-#---------------------------------------------------------------------------------------------#
-	
-#	.macro ChkIfInsideArena
-#		li $a0, 100	#
-#		li $v0, 32	# Pause for 100 milisec
-#		syscall		#
-#	.end_macro
-#########################################################
+#################################################################################################
 
 
-######################################################################
+#################################################################################################
 	.text
 	
 	PaintArena		#Paint the arena
 	
-	Pause
-	Pause
-	Pause
-	Pause
 	Pause
 
 	lw $s0, snakeRight
@@ -82,9 +70,10 @@ arenaBG:	.word 0xBBBBFFFF	# BB      | B2 | 22 | 22  ----BACKGROUND COLOR	#
 	lw $s2, snakeLeft
 	lw $s3, snakeUp
 	li $s4, 3		# Head x_pos
-	li $s5, 1		# Head y_pos
+	li $s5, 2		# Head y_pos
 	li $s6, 0x10010404	# Tracking the tail to erase
 	lw $s7, snakeRight	# Current movement
+	
 	li $t0, 0x10010404	# Snake begin
 	li $t1, 0x10010410	# Snake end --- total size: (end - begin)/4 
 	lw $t3, screenStart
@@ -102,7 +91,7 @@ moveRight:
 	move $s7, $s0
 	jal drawHead
 	addi $s4, $s4, 1
-	
+				#init line 89 will jump here
 	Pause
 	
 	lw $t7, 0xFFFF0004		# Verifying which key is pressed
@@ -156,65 +145,70 @@ drawHead:	#local reg: $t7, $t0
 
 # Computing Address of (x, y) on the screen
 
-	sll $t1, $s5, 6 	# t1 = s5 * (2^6) = s5 * 64		(computing y)
+	sll $t1, $s5, 6 	# t1 = s5 * (2^7) = s5 * 128		(computing y)
 	add $t1, $t1, $s4	# t1 += s4				(computing x) 
 	sll $t1, $t1, 2		# 					(coordenate -> address)
 	lw $t2, screenStart	# Start address on the screen
 	add $t1, $t1, $t2	# Terminate couting address of new head
 	lw $t0, ($t1)		# Takes data stored at new head for comparation
-
-	# switch
-	beq $t0, 0xFFFF0000, okayHead	# if is new head is apple, jump bg verification; else
-	bne $t0, 0xBBBBFFFF, quit	# if new head address is NOT on the arena, quit
-okayHead: 
-	sw $s7, ($t1)		# else, store it at $CurrentMovement register
-	bne $t3, $s6, eraseTail #???????????????????
-	j generateApple
+	
+	# checking if new head address is valid
+	bne $t0, 0xFFFF0000, checkBG	# if next head add is not apple, check if it is BG
+	sw $s7, ($t1)			# draw head on bitmap display
+	j generateApple			# skip tail erasure, and generate apple
+	jr $ra
+checkBG:
+	bne $t0, 0xBBBBFFFF, quit
+	sw $s7, ($t1)	#draw head on bitmap display
+			# and proceed to erase tail
 	
 #--------------------------------------------------------------------------------------------------------------#
+
 eraseTail:	#local reg: $t7, $t6
 	lw $t6, ($s6)		# save previous value of tail
 	lw $t7, arenaBG		# load arenaBG color
 	sw $t7, ($s6)		# Clear the tail on the screen (replace with arena color)
-	beq $t6, $s0, eraseRight
-	beq $t6, $s1, eraseDown
-	beq $t6, $s2, eraseLeft
-	beq $t6, $s3, eraseUp
+	beq $t6, $s0, eraseRight	
+	beq $t6, $s1, eraseDown		 
+	beq $t6, $s2, eraseLeft		 
+	beq $t6, $s3, eraseUp		
 	jr $ra
 eraseRight:
-	addi $s6, $s6, 4	# next pixel to erase
+	addi $s6, $s6, 4	# next pixel to become the tail (x++)
 	jr $ra
 eraseDown:
-	addi $s6, $s6, 256
+	addi $s6, $s6, 256	# next pixel to become the tail (y++)
 	jr $ra
 eraseLeft:
-	subi $s6, $s6, 4
+	subi $s6, $s6, 4	# next pixel to become the tail (x--)
 	jr $ra
 eraseUp:
-	subi $s6, $s6, 256
+	subi $s6, $s6, 256 	# next pixel to become the tail (y--)
 	jr $ra
+
+#--------------------------------------------------------------------------------------------------------------#
 	
 generateApple:
 # Generate random number ---------------------------------
-	li $a1, 102	# Here $a1 configures the max value wich is the number of units on display (0 til 1023).
+	li $a1, 1112	# Here $a1 configures the max value wich is the number of units on display (0 til 1023).
     	li $v0, 42  	#generates the random number.
     	syscall
     	
     	li $v0, 1   #1 print integer
     	syscall
 # Verify if it's inside the playabe area -----------------
-
+	move $t0, $a0		# 
+	sll $t0, $t0, 2		# Computing new apple address
+	lw $t3, screenStart	#
+	add $t3, $t3, $t0	#
+	lw $t0, ($t3)		# get new add content
+	bne $t0, 0xBBBBFFFF, generateApple	# if new apple address content is not arenaBG, try again
 # Painting apple pixel -----------------------------------
-	move $t0, $a0
-	sll $t0, $t0, 2
-	add $t3, $t3, $t0
 	sw $t4, ($t3)
-#---------------------------------------------------------
+	
 	jr $ra
+#---------------------------------------------------------
 
 quit:
 	li $v0, 10
 	syscall
-	
-# TODO Here may come the score or clear the screen...
-	
