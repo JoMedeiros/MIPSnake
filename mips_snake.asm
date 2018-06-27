@@ -193,9 +193,6 @@ generateApple:
 	li $a1, 1112	# Here $a1 configures the max value wich is the number of units on display (0 til 1023).
     	li $v0, 42  	#generates the random number.
     	syscall
-    	
-    	li $v0, 1   #1 print integer
-    	syscall
 # Verify if it's inside the playabe area -----------------
 	move $t0, $a0		# 
 	sll $t0, $t0, 2		# Computing new apple address
