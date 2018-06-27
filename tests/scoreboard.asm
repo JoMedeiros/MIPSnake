@@ -56,7 +56,7 @@ scoreBG:	.word 0x00FFFF00	# yellow
 # Addresses --------------------------
 screenStart:	.word 0x10010500
 score_add_end:	.word 0x1fffff0f
-# - 
+# # # Number
 dozen_start:	.word 0x10011294, 0x10011298, 0x1001129C,
                       0x10011394, 0x10011398, 0x1001139C,
                       0x10011494, 0x10011498, 0x1001149C,
@@ -245,7 +245,7 @@ paint9:
 # ------------------
 paintBlack:
 	la $t0, dozen_start
-	lw $t1, arenaBG
+	li $t1, 0
 
 # Display painting --------------------------------------------------------------------------------------------
 drawScore_compAdd:	# args: (t0, t7, t1)	t0 = array_begin_add; t7 = draw_code [1,3]; t1 = color
