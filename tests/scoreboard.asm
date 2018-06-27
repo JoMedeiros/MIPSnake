@@ -48,13 +48,13 @@
 ################################################################################################
 	.data
 # Score
-score: 		99	#initial score
+score: 		0	#initial score
 # Colors
 arenaBG:	.word 0xBBBB0000	# blue
 scoreBG:	.word 0x00FFFF00	# yellow
 
 # Addresses --------------------------
-screenStart:	.word 0x10010200
+screenStart:	.word 0x10010500
 score_add_end:	.word 0x1fffff0f
 # - 
 dozen_start:	.word 0x10011294, 0x10011298, 0x1001129C,
@@ -80,8 +80,42 @@ dozen2_start:	.word 0x10011294, 0x10011298, 0x1001129C,
                       0x10011494, 0x10011498, 0x1001149C,
                       0x10011594,             
 		      0x10011694, 0x10011698, 0x1001169C, 0x1fffff0f
+		      
+dozen3_start:	.word 0x10011294, 0x10011298, 0x1001129C,
+                                              0x1001139C,
+                      0x10011494, 0x10011498, 0x1001149C,
+                                              0x1001159C,
+		      0x10011694, 0x10011698, 0x1001169C, 0x1fffff0f
+		      
+dozen4_start:	.word 0x10011294,             0x1001129C,
+                      0x10011394,             0x1001139C,
+                      0x10011494, 0x10011498, 0x1001149C,
+                                              0x1001159C,
+                                              0x1001169C, 0x1fffff0f
+		      
+dozen5_start:	.word 0x10011294, 0x10011298, 0x1001129C,
+                      0x10011394,
+                      0x10011494, 0x10011498, 0x1001149C,
+                                              0x1001159C,
+		      0x10011694, 0x10011698, 0x1001169C, 0x1fffff0f
 
-#...
+dozen6_start:	.word 0x10011294, 0x10011298, 0x1001129C,
+                      0x10011394,
+                      0x10011494, 0x10011498, 0x1001149C,
+                      0x10011594,             0x1001159C,
+		      0x10011694, 0x10011698, 0x1001169C, 0x1fffff0f
+
+dozen7_start:	.word 0x10011294, 0x10011298, 0x1001129C,
+                                              0x1001139C,
+                                              0x1001149C,
+                                              0x1001159C,
+		                              0x1001169C, 0x1fffff0f
+
+dozen8_start:	.word 0x10011294, 0x10011298, 0x1001129C,
+                      0x10011394,             0x1001139C,
+                      0x10011494, 0x10011498, 0x1001149C,
+                      0x10011594,             0x1001159C,
+		      0x10011694, 0x10011698, 0x1001169C, 0x1fffff0f
 		      
 dozen9_start:	.word 0x10011294, 0x10011298, 0x1001129C,
                       0x10011394,             0x1001139C,
@@ -93,6 +127,7 @@ dozen9_start:	.word 0x10011294, 0x10011298, 0x1001129C,
 
 ################################################################################################
 	.text
+	PaintArena
 	
 	lw $s0, score
 	move $t0, $s0	# move $0 to calc Scores to be displayed
@@ -101,10 +136,17 @@ dozen9_start:	.word 0x10011294, 0x10011298, 0x1001129C,
 	SaveDispVal	# Save current calculated display values	
 
 	# for debbug purposes __________________________________________________________________
+loop:
 	ScoreUp		# update score
 
 	move $t0, $s0	# move new score to calc Scores to be displayed
-	jal calcScoreDisp	
+	jal calcScoreDisp
+	beq $s0, 300, finishedPainting	#exit loop	
+	jal paintDisplay
+loop2:
+	SaveDispVal
+	Pause
+	j loop
 	
 	# units always change. update units
 	# compare dozens. if change,
@@ -116,15 +158,17 @@ dozen9_start:	.word 0x10011294, 0x10011298, 0x1001129C,
 # free reg: t0, t1, t2, t3, t7
 
 # Paint Switch ---------------------------------------------------------------------------------------------------
+paintDisplay:
 	# prepare Units	------------------------------------------------------------
 	li $t7, 1		# code 1: painting units
 	jal paintBlack
+
+	move $t2, $t4		# pass the number to be painted (t4 have the Units)		
 	lw $t1, scoreBG		# Prepare to paint score color (load color)
-	move $t2, $t4		# pass the number to be painted (t4 have the Units)
 	jal chooseNumber
 
 	# prepare Dozens	------------------------------------------------------------
-	beq $t5, $s2, quit	# only units changed, no need to paint anymore
+	beq $t5, $s2, loop2	# only units changed, no need to paint anymore
 
 	li $t7, 2		# code 2: painting dozens
 	jal paintBlack
@@ -134,27 +178,26 @@ dozen9_start:	.word 0x10011294, 0x10011298, 0x1001129C,
 	jal chooseNumber
 
 	# prepare Hundreds	------------------------------------------------------------
-	beq $t6, $s3, quit	# only changed till dozens, no need to paint anymore
+	beq $t6, $s3, loop2	# only changed till dozens, no need to paint anymore
 	li $t7, 3		# code 3: painting hundreds	
 	jal paintBlack
 	lw $t1, scoreBG		# Prepare to paint score color (load color)	
 	move $t2, $t6		# pass the number to be painted (t6 = Hundred)
 	jal chooseNumber
-	j finishedPainting
+	jr $ra
 	
 	# 	prepare Hundreds	------------------------------------------------------------
 chooseNumber:	#arg: t2, number to be painted
 	beq $t2, 0, paint0	# decide what to paint:
 	beq $t2, 1, paint1
-	j paint2
-#	beq $t2, 2, paint2U
-#	beq $t2, 3, paint3U
-#	beq $t2, 4, paint4U
-#	beq $t2, 5, paint5U
-#	beq $t2, 6, paint6U
-#	beq $t2, 7, paint7U
-#	beq $t2, 8, paint8U
-#	j paint9U
+	beq $t2, 2, paint2
+	beq $t2, 3, paint3
+	beq $t2, 4, paint4
+	beq $t2, 5, paint5
+	beq $t2, 6, paint6
+	beq $t2, 7, paint7
+	beq $t2, 8, paint8
+	j paint9
 	jr $ra
 
 # 		Paint Number --------------------------------------------------------------------------------------------
@@ -168,6 +211,30 @@ paint1:
 	jr $ra
 paint2:
 	la $t0, dozen2_start	# load address from score array start
+	j drawScore_compAdd
+	jr $ra
+paint3:
+	la $t0, dozen3_start	# load address from score array start
+	j drawScore_compAdd
+	jr $ra
+paint4:
+	la $t0, dozen4_start	# load address from score array start
+	j drawScore_compAdd
+	jr $ra	
+paint5:
+	la $t0, dozen5_start	# load address from score array start
+	j drawScore_compAdd
+	jr $ra
+paint6:
+	la $t0, dozen6_start	# load address from score array start
+	j drawScore_compAdd
+	jr $ra
+paint7:
+	la $t0, dozen7_start	# load address from score array start
+	j drawScore_compAdd
+	jr $ra
+paint8:
+	la $t0, dozen8_start	# load address from score array start
 	j drawScore_compAdd
 	jr $ra
 paint9:
