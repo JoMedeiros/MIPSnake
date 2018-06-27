@@ -111,7 +111,7 @@ dozen9_start:	.word 0x10011294, 0x10011298, 0x1001129C,
 
 	.macro MegaPause
 		li $a0, 500	#								
-		li $v0, 32	# Pause for 100 milisec						
+		li $v0, 32	# Pause for 500 milisec						
 		syscall		#								
 	.end_macro											
 													
@@ -153,8 +153,7 @@ dozen9_start:	.word 0x10011294, 0x10011298, 0x1001129C,
 	.text
 	
 	PaintArena		#Paint the arena
-	
-#	Pause
+
 	
 	# Loading starting values...
 	lw $s0, initialScore	# load initial score
@@ -245,9 +244,9 @@ drawHead:	#local reg: t0, t1, t7
 	# checking if new head address is valid
 	bne $t7, 0xFFFF0000, checkBG	# if next head add is not apple, check if it is BG
 	sw $s7, ($t1)			# draw head on bitmap display
-	j scoreUp
 	
 	move $t9, $ra
+	j scoreUp
 drawHead2:
 	move $ra, $t9
 	j generateApple			# skip tail erasure, and generate apple
@@ -312,15 +311,12 @@ scoreUp:
 	move $t0, $s0		# move new score to calc Scores to be displayed
 	jal calcScoreDisp
 	beq $s0, 864, quitWin	# max score
-	
-	MegaPause
-	
 	jal paintDisplay
 	SaveDispVal
 	j drawHead2
 # Paint Switch ---------------------------------------------------------------------------------------------------
 paintDisplay:
-#	move $t8, $ra  # save link
+	move $t8, $ra  # save link
 	# prepare Units	------------------------------------------------------------
 	li $t7, 1		# code 1: painting units
 	jal paintBlack
@@ -329,7 +325,6 @@ paintDisplay:
 	lw $t1, scoreColor		# Prepare to paint score color (load color)
 	jal chooseNumber
 	
-	MegaPause
 	# prepare Dozens	------------------------------------------------------------
 #	bne $t6, $s2, paintDoz
 #	jr $t8			#only units changed, no need to paint anymore
@@ -351,8 +346,8 @@ paintHun:
 	move $t2, $t6		# pass the number to be painted (t6 = Hundred)
 	lw $t1, scoreColor	# Prepare to paint score color (load color)	
 	jal chooseNumber
-#	jr $t8
-	jr $ra
+	jr $t8
+#	jr $ra
 	
 	# decide what to paint: ------------------------------------------------------------
 chooseNumber:	#arg: t2, number to be painted
