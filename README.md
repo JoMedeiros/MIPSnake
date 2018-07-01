@@ -15,10 +15,6 @@ handling input, generating random numbers and so on.
 
 There's a bug in the Mars MIPS emulator. You may fix it following the instructions in this [link](https://dtconfect.wordpress.com/2013/02/09/mars-mips-simulator-lockup-hackfix/).
 
-### The road so far...
-
-Currently the snake is moving, the program stops when it collides with the wall and that's it. The file `Snake.asm` has the most recent functional version of the "game". 
-
 ## TODO list
 
 - [x] ~~Simulate a queue structure (FIFO).~~
