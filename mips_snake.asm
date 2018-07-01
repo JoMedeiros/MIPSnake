@@ -117,8 +117,8 @@ dozen9_start:	.word 0x10011294, 0x10011298, 0x1001129C,
 	.macro PaintArena 
 		li $t0, 128 #starting line index [halved line size]
 		li $t1, 0 #starting pixel index
-		lw $t3, screenStart # load starting address on s3		
-		lw $t2, arenaBG #load bg color on s2	
+		lw $t3, screenStart # load starting address on t3		
+		lw $t2, arenaBG #load bg color on t2	
 	drawline:
 		sw $t2, ($t3)		# paint pixel_address
 		addi $t3, $t3, 4	# pixel_adress++
