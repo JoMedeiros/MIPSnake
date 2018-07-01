@@ -7,7 +7,7 @@
 #	Display Height in Piexels: 256				#
 #---------------------------------------------------------------#
 # Total units: (512/8) * (256/8) = 64 x 32 = 2048 pixels	#
-# Arena units: (216/8) * (256/8) = 27 x 32 = 864 pixels		#
+# Arena units: (256/8) * (216/8) = 32 x 27 = 864 pixels		#
 #################################################################
 
 #########################################################################################
@@ -25,9 +25,6 @@ snakeLeft:	.word 0x0200FF00	# 02      | 00 | FF | 00    |			#
 snakeUp:	.word 0x0300FF00	# 03      | 00 | FF | 00  --|			#
 					#------------------------			#									#
 #* DM = Dont matter									#
-											#
-# Misc											#
-initialScore:	0									#
 # Addresses	------------------------------------------------------------------------
 screenStart:	.word 0x10010500
 add_end_flag:	.word 0x1fffff0f
@@ -104,8 +101,8 @@ dozen9_start:	.word 0x10011294, 0x10011298, 0x1001129C,
 #	Macros:											
 #	       _____										
 	.macro Pause										
-		li $a0, 60	#								
-		li $v0, 32	# Pause for 100 milisec						
+		li $a0, 80	#								
+		li $v0, 32	# Pause for 80 milisec						
 		syscall		#								
 	.end_macro
 
@@ -156,7 +153,7 @@ dozen9_start:	.word 0x10011294, 0x10011298, 0x1001129C,
 
 	
 	# Loading starting values...
-	lw $s0, initialScore	# load initial score
+	li $s0, 3		# load initial score (size of the initial snake)
 	li $s4, 3		# Head x_pos
 	li $s5, 2		# Head y_pos
 	li $s6, 0x10010704	# Tracking the tail to erase
@@ -306,14 +303,37 @@ generateApple:
 #---------------------------------------------------------
 
 ################################################################################################################
+#Calculate Score Units, Dozens and Hundreds --------------------------------------------------------------------
+calcScoreDisp:	#args: t0. 
+		#results: t4, t5, t6
+	
+	li $t1, 10
+	li $t2, 100
+	# Units
+	div $t0, $t1 	# div score 10
+	mfhi $t4	# print (score mod 10)
+
+	# Dozens:
+	mflo $t7 	# score/10
+	div $t7, $t1	# div (score/10) 10
+	mfhi $t5	# print ((score/10) mod 10)
+
+	# Hundreds:
+	div $t6, $t0, $t2 # print (score / 100)
+	
+	jr $ra
+
+###############################################################################################
+
 scoreUp:
-	ScorePlusPlus
+	ScorePlusPlus		# score++
 	move $t0, $s0		# move new score to calc Scores to be displayed
 	jal calcScoreDisp
 	beq $s0, 864, quitWin	# max score
 	jal paintDisplay
-	SaveDispVal
+	SaveDispVal		# save display numbers on s1 (units) , s2 (dozens) and s3 (hundreds).
 	j drawHead2
+
 # Paint Switch ---------------------------------------------------------------------------------------------------
 paintDisplay:
 	move $t8, $ra  # save link
@@ -346,8 +366,7 @@ paintHun:
 	move $t2, $t6		# pass the number to be painted (t6 = Hundred)
 	lw $t1, scoreColor	# Prepare to paint score color (load color)	
 	jal chooseNumber
-	jr $t8
-#	jr $ra
+	jr $t8			# finished painting display, go back.
 	
 	# decide what to paint: ------------------------------------------------------------
 chooseNumber:	#arg: t2, number to be painted
@@ -428,28 +447,6 @@ drawScore_paint:
 	j drawScore_compAdd
 draw_quit:
 	jr $ra
-	
-#Calculate Score Units, Dozens and Hundreds --------------------------------------------------------------------
-calcScoreDisp:	#args: t0. 
-		#results: t4, t5, t6
-	
-	li $t1, 10
-	li $t2, 100
-	# Units
-	div $t0, $t1 	# div score 10
-	mfhi $t4	# print (score mod 10)
-
-	# Dozens:
-	mflo $t7 	# score/10
-	div $t7, $t1	# div (score/10) 10
-	mfhi $t5	# print ((score/10) mod 10)
-
-	# Hundreds:
-	div $t6, $t0, $t2 # print (score / 100)
-	
-	jr $ra
-
-#----------------------------------------------------------------------------------------------------------------
 
 ################################################################################################################
 quitWin:
