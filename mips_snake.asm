@@ -101,7 +101,7 @@ dozen9_start:	.word 0x10011294, 0x10011298, 0x1001129C,
 #	Macros:											
 #	       _____										
 	.macro Pause										
-		li $a0, 80	#								
+		li $a0, 100	#								
 		li $v0, 32	# Pause for 80 milisec						
 		syscall		#								
 	.end_macro
