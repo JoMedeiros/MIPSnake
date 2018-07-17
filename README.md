@@ -15,15 +15,19 @@ handling input, generating random numbers and so on.
 
 There's a bug in the Mars MIPS emulator. You may fix it following the instructions in this [link](https://dtconfect.wordpress.com/2013/02/09/mars-mips-simulator-lockup-hackfix/). The file `Mars_4_5_FIXED.jar` is a version of the original file with the bug corrected. 
 
-## TODO list
+## Running on Mars :alien:
 
-- [x] ~~Simulate a queue structure (FIFO).~~
-- [ ] ~~Store the snake pixels positions int the queue.~~
-- [x] Generate random "apple" using syscall.
-- [x] Walls collision.
-- [x] Self collision.
-- [x] Verify if the "apple" collides with the snake.
-- [x] *(optional) Display score* 
+Setting the enviroment to run the game:
+
+![settings](imgs/settings.gif)
+
+It dies when hits itself...
+
+![self collinsion](imgs/self-collision.gif)
+
+... Or the walls.
+
+![walls collision](imgs/wall-collision.gif)
 
 ## Authors :octocat:
 
